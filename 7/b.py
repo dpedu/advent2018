@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 
 
-from time import sleep
-from pprint import pprint
-from collections import namedtuple, defaultdict
-
-
 class Job(object):
     def __init__(self, id, reqs, duration):
         self.id = id
@@ -27,6 +22,8 @@ class Worker(object):
 
 def main():
     num_workers = 5
+    workers = [Worker() for i in range(0, num_workers)]
+
     jobs = {}
 
     def makejob(jobid):
@@ -36,40 +33,31 @@ def main():
     with open("input.txt") as f:
         for line in f.readlines():
             _, stepid, _, _, _, _, _, blocks, _, _ = line.split()
-
             makejob(stepid)
             makejob(blocks)
-
             jobs[blocks].reqs.update([stepid])
 
-
-    workers = [Worker() for i in range(0, num_workers)]
-    empty = set()
-
-    duration = 0
+    duration = 0  # the answer
     completed = set()
     while True:
-        print()
-        # pprint(jobs)
-        # print(workers)
         # do worker accounting
         remainings = [worker.busy for worker in workers if worker.task is not None]
+
+        # find the next worker(s) to complete
         if remainings:
             next_done = min(remainings)
-            # print("next task done in", next_done, "s")
-            duration += next_done
 
+            # fast-forward time to that point
+            duration += next_done
             for worker in workers:
                 if worker.task:
                     worker.busy -= next_done
                     if worker.busy == 0:
-                        print("finished", worker.task)
+                        print("finished task:", worker.task)
                         completed.update([worker.task.id])
                         worker.task = None
 
-        print("total = ", duration)
-
-        if not jobs:
+        if not jobs and all([worker.task is None for worker in workers]):
             break
 
         # find available tasks
@@ -77,9 +65,8 @@ def main():
 
         # sort by weight
         available.sort(key=lambda x: x.duration)
-        # print("can do:", available)
-        # return
 
+        # assign tasks to available workers
         for worker in workers:
             if worker.task is None:
                 if not available:
@@ -87,9 +74,8 @@ def main():
                 task = available.pop()
                 worker.task = task
                 worker.busy = task.duration
-                # print("assigned {} to {}")
-                print("assigned:", worker)
-                del jobs[task.id]
+                print("assigned", task, "to", worker)
+                del jobs[task.id]  # remove job from work queue
 
     print(duration)
 
