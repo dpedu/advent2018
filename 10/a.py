@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 
+import sys
 from collections import defaultdict
 
 
@@ -21,22 +22,28 @@ class Point(object):
 
 def drawpoints(points):
     # sort points into rows
+    minY = sys.maxsize
+    maxY = -minY - 1
+
+    for p in points:
+        if p.y < minY:
+            minY = p.y
+        if p.y > maxY:
+            maxY = p.y
+
+    rangeY = (minY - maxY + 1)
+
+    if abs(rangeY) != 8:
+        return False
+
+    minX = min([i.x for i in points])
+    maxX = max([i.x for i in points])
 
     rows = defaultdict(list)
     for point in points:
         rows[point.y].append(point)
 
-    minX = min([i.x for i in points])
-    maxX = max([i.x for i in points])
-    minY = min([i.y for i in points])
-    maxY = max([i.y for i in points])
-
-    rangeY = (minY - maxY + 1)
-
     rows_sorted = sorted(rows.items(), key=lambda x: x[1][0].y)
-
-    if abs(rangeY) != 8:
-        return False
 
     for rowY, rowpoints in rows_sorted:
         rowX = sorted(rowpoints, key=lambda x: x.x)
